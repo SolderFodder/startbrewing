@@ -1,7 +1,7 @@
 //#include <bcm2835.h>
 //#include <cjson.h>
-//#include <curl/curl.h>
-//#include <oauth.h>
+#include <curl/curl.h>
+#include <oauth.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -21,7 +21,8 @@ int main(int argc, const char* argv[])
 	{
 		printf("usage: startbrewing file\n");
 	} else {
-		
+		FILE *out = stdout;
+		const char *url = "https://userstream.twitter.com/1.1/user.json";
 		struct oauth_keys *keys = malloc(sizeof(struct oauth_keys)+1);
 
 		keys->ckey = malloc(50);
@@ -35,13 +36,22 @@ int main(int argc, const char* argv[])
 		
 		read_in_keys(filename, keys);
 		
-		printf("%s\n", keys->ckey);
-		printf("%s\n", keys->csecret);
-		printf("%s\n", keys->atok);
-		printf("%s\n", keys->atoksecret);
+		curl_global_init(CURL_GLOBAL_ALL);
+		
+		CURL *curl = curl_easy_init();
+		char *signedurl = oauth_sign_url2(url, NULL, OA_HMAC, "GET", keys->ckey, keys->csecret, keys->atok, keys->atoksecret);
+		
+		curl_easy_setopt(curl, CURLOPT_URL, signedurl);
+		curl_easy_setopt(curl, CURLOPT_USERAGENT, "Start Brewing/0.1");
+		curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)out);
+		
+		int curl_status = curl_easy_perform(curl);
+		
+		curl_easy_cleanup(curl);
+		curl_global_cleanup();
 	}
 	
-
 	return 0;
 }
 
@@ -49,13 +59,7 @@ void read_in_keys(char *f, struct oauth_keys *k) {
 
 	FILE *file = fopen(f, "r");
 
-	size_t l = 100;
-
-	//getline(&k->ckey, &l, file);
 	fscanf(file, "%s\n%s\n%s\n%s\n", k->ckey, k->csecret, k->atok, k->atoksecret);
-	//fscanf(file, "%s\n", k->csecret);
-	//fgets(k->atok, 100, file);
-	//fgets(k->atoksecret, 100, file);
 
 	fclose(file);
 }
