@@ -16,26 +16,29 @@ struct oauth_keys {
 void read_in_keys(char*, struct oauth_keys*);
 
 int main(int argc, const char* argv[])
-{
-	struct oauth_keys *keys = malloc(sizeof(struct oauth_keys)+1);
-	keys->ckey = malloc(sizeof(char*)+1);
-	keys->csecret = malloc(sizeof(char*)+1);
-	keys->atok = malloc(sizeof(char*)+1);
-	keys->atoksecret = malloc(sizeof(char*)+1);
-	char *filename = malloc(strlen(argv[1])+1);
-	
-	strcpy(filename, argv[1]);
-	
+{	
 	if(argc != 2)
 	{
-		printf("usage: startbrewing file");
+		printf("usage: startbrewing file\n");
 	} else {
+		
+		struct oauth_keys *keys = malloc(sizeof(struct oauth_keys)+1);
+
+		keys->ckey = malloc(50);
+		keys->csecret = malloc(50);
+		keys->atok = malloc(50);
+		keys->atoksecret = malloc(50);
+		
+		char *filename = malloc(strlen(argv[1])+1);
+	
+		strcpy(filename, argv[1]);
+		
 		read_in_keys(filename, keys);
 		
 		printf("%s\n", keys->ckey);
-		//printf("%s\n", keys->csecret);
-		//printf("%s\n", keys->atok);
-		//printf("%s\n", keys->atoksecret);
+		printf("%s\n", keys->csecret);
+		printf("%s\n", keys->atok);
+		printf("%s\n", keys->atoksecret);
 	}
 	
 
@@ -46,7 +49,10 @@ void read_in_keys(char *f, struct oauth_keys *k) {
 
 	FILE *file = fopen(f, "r");
 
-	fscanf(file, "%s\n", k->ckey);
+	size_t l = 100;
+
+	//getline(&k->ckey, &l, file);
+	fscanf(file, "%s\n%s\n%s\n%s\n", k->ckey, k->csecret, k->atok, k->atoksecret);
 	//fscanf(file, "%s\n", k->csecret);
 	//fgets(k->atok, 100, file);
 	//fgets(k->atoksecret, 100, file);
