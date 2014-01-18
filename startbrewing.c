@@ -1,28 +1,34 @@
-//#include <bcm2835.h>
-//#include <cjson.h>
-//#include <curl/curl.h>
-//#include <oauth.h>
+#include <bcm2835.h>
+#include <curl/curl.h>
+#include <oauth.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "cJSON.h"
 
-struct oauth_keys {
+typedef struct {
 	char *ckey;
 	char *csecret;
 	char *atok;
 	char *atoksecret;
-};
+} oauth_keys;
 
-void read_in_keys(char*, struct oauth_keys*);
+void read_in_keys(char*, oauth_keys*);
+size_t parse(char *ptr, size_t size, size_t nmemb, char *data);
+
+int count;
 
 int main(int argc, const char* argv[])
 {	
+
+	count = 0;
+	
 	if(argc != 2)
 	{
 		printf("usage: startbrewing file\n");
 	} else {
-		
-		struct oauth_keys *keys = malloc(sizeof(struct oauth_keys)+1);
+		const char *url = "https://userstream.twitter.com/1.1/user.json";
+		oauth_keys *keys = malloc(sizeof(oauth_keys)+1);	
 
 		keys->ckey = malloc(50);
 		keys->csecret = malloc(50);
@@ -35,38 +41,69 @@ int main(int argc, const char* argv[])
 		
 		read_in_keys(filename, keys);
 		
-		printf("%s\n", keys->ckey);
-		printf("%s\n", keys->csecret);
-		printf("%s\n", keys->atok);
-		printf("%s\n", keys->atoksecret);
+		curl_global_init(CURL_GLOBAL_ALL);
+		
+		CURL *curl = curl_easy_init();
+		char *signedurl = oauth_sign_url2(url, NULL, OA_HMAC, "GET", keys->ckey, keys->csecret, keys->atok, keys->atoksecret);
+		
+		curl_easy_setopt(curl, CURLOPT_URL, signedurl);
+		curl_easy_setopt(curl, CURLOPT_USERAGENT, "Start Brewing/0.1");
+		curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, parse);
+		//curl_easy_setopt(curl, CURLOPT_WRITEDATA, data);
+		
+		int curl_status = curl_easy_perform(curl);
+		
+		curl_easy_cleanup(curl);
+		curl_global_cleanup();
 	}
 	
-
 	return 0;
 }
 
-void read_in_keys(char *f, struct oauth_keys *k) {
+void read_in_keys(char *f, oauth_keys *k) {
 
 	FILE *file = fopen(f, "r");
 
-	size_t l = 100;
-
-	//getline(&k->ckey, &l, file);
 	fscanf(file, "%s\n%s\n%s\n%s\n", k->ckey, k->csecret, k->atok, k->atoksecret);
-	//fscanf(file, "%s\n", k->csecret);
-	//fgets(k->atok, 100, file);
-	//fgets(k->atoksecret, 100, file);
 
 	fclose(file);
 }
 
-void stream_init()
+size_t parse(char *ptr, size_t size, size_t nmemb, char *data)
 {
-	
+	if(size*nmemb <= 2)
+	{
+		return size*nmemb;
+	} 
+
+	printf("%s\n", ptr); //DEBUG
+
+	cJSON *root = cJSON_Parse(ptr);
+	struct cJSON *current = root->child;
+
+	while(strcmp(current->string, "text") != 0) 
+	{
+		if(current->next != NULL)
+		{
+			current = current->next;
+		} else {
+			break;
+			printf("done"); //DEBUG
+		}
+	}
+
+	if(strstr(current->valuestring, "START") != NULL)
+	{
+		
+	} else if(current->valuestring, "OFF") != NULL)
+	{
+
+	}
+
+	printf("Current object: %s\n", cJSON_Print(current)); //DEBUG
+
+	return size*nmemb;
 }
 
-void parse()
-{
-	
-}
 
