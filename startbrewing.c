@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include "cJSON.h"
 
+#define PIN RPI_GPIO_p1_11
+
 typedef struct {
 	char *ckey;
 	char *csecret;
@@ -21,11 +23,17 @@ int count;
 int main(int argc, const char* argv[])
 {	
 
+	if(!bcm2835_init())
+	{
+		return 0;
+	}
+
 	count = 0;
 	
 	if(argc != 2)
 	{
 		printf("usage: startbrewing file\n");
+		return 0; 
 	} else {
 		const char *url = "https://userstream.twitter.com/1.1/user.json";
 		oauth_keys *keys = malloc(sizeof(oauth_keys)+1);	
@@ -94,10 +102,11 @@ size_t parse(char *ptr, size_t size, size_t nmemb, char *data)
 
 	if(strstr(current->valuestring, "START") != NULL)
 	{
-		
-	} else if(current->valuestring, "OFF") != NULL)
-	{
+		bcm2835_gpio_write(PIN, HIGH);		
 
+	} else if(strstr(current->valuestring, "OFF") != NULL)
+	{
+		bcm2835_gpio_write(PIN, LOW);
 	}
 
 	printf("Current object: %s\n", cJSON_Print(current)); //DEBUG
