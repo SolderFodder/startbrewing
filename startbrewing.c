@@ -50,8 +50,7 @@ int main(int argc, const char* argv[])
 		curl_easy_setopt(curl, CURLOPT_USERAGENT, "Start Brewing/0.1");
 		curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, parse);
-		//curl_easy_setopt(curl, CURLOPT_WRITEDATA, data);
-		
+
 		int curl_status = curl_easy_perform(curl);
 		
 		curl_easy_cleanup(curl);
