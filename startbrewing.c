@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include "cJSON.h"
 
-#define PIN RPI_GPIO_p1_11
+#define PIN RPI_GPIO_P1_11
 
 typedef struct {
 	char *ckey;
