@@ -25,8 +25,11 @@ int main(int argc, const char* argv[])
 
 	if(!bcm2835_init())
 	{
+		printf("%s\n", "BCM2835 failed to initialize");
 		return 0;
 	}
+
+	bcm2835_gpio_fsel(PIN, BCM2835_GPIO_FSEL_OUTP);
 
 	count = 0;
 	
